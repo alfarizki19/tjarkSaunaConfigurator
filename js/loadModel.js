@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { initMenu } from './menuController.js';
 import { initController } from './modelController.js';
 
-// Jalankan Menu dulu agar window.switchMenu tersedia
+// Run Menu first so that window.switchMenu is available.
 initMenu();
 
 const viewer = document.getElementById('modelViewer');

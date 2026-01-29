@@ -25,7 +25,7 @@ export function initController(model) {
         if (obj) initialPos.set(name, { x: obj.position.x, y: obj.position.y, z: obj.position.z });
     });
 
-    // Ambil initial pos mesh di dalam roof secara spesifik
+    // Take the initial mesh position inside the roof specifically.
     if (groups.roof) {
         groups.roof.traverse(c => {
             if (c.isMesh) initialPos.set(c.name, { x: c.position.x, y: c.position.y, z: c.position.z });
@@ -65,7 +65,7 @@ export function initController(model) {
         document.getElementById('valX').innerText = realWidth.toFixed(2) + " m";
         document.getElementById('valY').innerText = realDepth.toFixed(2) + " m";
 
-        // --- KONFIGURASI TOLERANSI ANDA ---
+        // --- Scale Tolerance ---
         const LIMIT_X = 2.5; 
         const LIMIT_Y = 2.3; 
 
@@ -121,7 +121,7 @@ export function initController(model) {
             });
         }
 
-        // Glass Kompensasi
+        // Glass Scale Adjusment
         const scaleKomp = (0.978 * fWallX - 0.333) / (0.978 - 0.333);
         model.traverse(c => { if(c.name.includes('wall_FL') || c.name.includes('wall_FR')) c.scale.x = scaleKomp; });
         if (groups.door) groups.door.position.z = initialPos.get('doorGroup').z * sY;
@@ -147,7 +147,7 @@ export function initController(model) {
         };
     });
 
-    // Tab Buttons (Fix SwitchMenu Error)
+    // Tab Buttons (Fix SwitchMenu Error) / error handling
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.onclick = () => {
             const menuId = btn.id.replace('btn-', '') + 'Menu';

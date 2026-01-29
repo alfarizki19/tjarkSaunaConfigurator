@@ -18,7 +18,7 @@ export function showExterior(model, variant) {
     setVisibility(model, ext_B, variant === 'B');
     setVisibility(model, ext_C, variant === 'C');
     
-    // Khusus roofWood di dalam roofGroup
+    // roofWood
     const roofGroup = model.getObjectByName('roofGroup');
     if (roofGroup) {
         roofGroup.children.forEach(c => {
