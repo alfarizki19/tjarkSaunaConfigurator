@@ -1,90 +1,775 @@
-body { 
-    margin: 0; background-color: #f5f5f5; 
-    font-family: 'Inter', 'Segoe UI', sans-serif;
-    display: flex; width: 100vw; height: 100vh; overflow: hidden;
+/* ============================================================
+   RESET & BASE
+============================================================ */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-#modelViewer { flex: 1; height: 100vh; position: relative; background: #fff; }
-
-#modelControllerArea { 
-    width: 320px; background: #ffffff; color: #333; padding: 25px; 
-    display: flex; flex-direction: column; gap: 20px;
-    border-left: 1px solid #ddd; box-shadow: -2px 0 10px rgba(0,0,0,0.05);
+html, body {
+    height: 100%;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #ffffff;
+    color: #1E293B;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
 }
 
-h2 { margin: 0; font-size: 1.4em; color: #1a1a1a; }
-
-.control-box {
-    background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee;
+/* ============================================================
+   CSS CUSTOM PROPERTIES (color palette from UX Pilot design)
+============================================================ */
+:root {
+    --color-primary-50:  #EFF6FF;
+    --color-primary-500: #3B82F6;
+    --color-primary-600: #2563EB;
+    --color-slate-50:    #F8FAFC;
+    --color-slate-100:   #F1F5F9;
+    --color-slate-200:   #E2E8F0;
+    --color-slate-300:   #CBD5E1;
+    --color-slate-400:   #94A3B8;
+    --color-slate-500:   #64748B;
+    --color-slate-600:   #475569;
+    --color-slate-700:   #334155;
+    --color-slate-800:   #1E293B;
+    --color-slate-900:   #0F172A;
+    --color-emerald-500: #10B981;
+    --color-emerald-600: #059669;
+    --sidebar-width: 420px;
 }
 
-.control-box p { margin: 0 0 10px 0; font-size: 0.85em; font-weight: 600; color: #666; }
-
-.val-display {
-    text-align: right; font-weight: bold; color: #2563eb; font-size: 1.1em; margin-top: 5px;
+/* ============================================================
+   DRAG HANDLE (mobile bottom-sheet indicator, hidden on desktop)
+============================================================ */
+.drag-handle {
+    display: none;
 }
 
-input[type=range] { width: 100%; accent-color: #2563eb; cursor: pointer; }
-
-button { 
-    padding: 12px; cursor: pointer; background: #1a1a1a; color: #fff; 
-    border: none; border-radius: 6px; font-weight: bold; transition: 0.2s;
-}
-
-button:hover { background: #444; }
-
-.info-box { margin-top: auto; font-size: 0.75em; color: #999; text-align: center; }
-
-#loading {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    color: #2563eb; font-weight: 600;
-}
-
-/* Navigasi Tab */
-.menu-tabs {
+/* ============================================================
+   APP LAYOUT WRAPPER (desktop: flex row)
+============================================================ */
+#appLayout {
     display: flex;
-    gap: 5px;
-    margin-bottom: 10px;
+    flex-direction: row;
+    height: 100vh;
+    overflow: hidden;
 }
 
-.tab-btn {
+/* ============================================================
+   MODEL VIEWER (left panel, flex:1)
+============================================================ */
+#modelViewer {
     flex: 1;
-    padding: 8px 5px;
-    font-size: 0.8em;
-    background: #eee;
-    color: #333;
-    border-radius: 4px;
+    position: relative;
+    background: var(--color-slate-100);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
-.tab-btn.active {
-    background: #2563eb;
-    color: white;
+.viewer-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Texture Menu Styling */
-.menu-label {
-    font-size: 0.85em;
+#saunaModelImg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    max-width: 64rem;
+    max-height: 80vh;
+    filter: drop-shadow(0 25px 50px rgba(0, 0, 0, 0.15));
+    transition: transform 0.7s ease-out;
+}
+
+#modelViewer:hover #saunaModelImg {
+    transform: scale(1.05);
+}
+
+.viewer-shadow {
+    position: absolute;
+    bottom: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    height: 3rem;
+    background: rgba(0, 0, 0, 0.10);
+    filter: blur(2rem);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* ============================================================
+   CONFIGURATOR SIDEBAR (right panel, fixed width)
+============================================================ */
+#configuratorSidebar {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
+    background: #fff;
+    border-left: 1px solid var(--color-slate-100);
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.06);
+    z-index: 30;
+}
+
+/* ============================================================
+   SECTION HEADER
+============================================================ */
+#sectionHeader {
+    padding: 1.75rem 2rem;
+    border-bottom: 1px solid var(--color-slate-50);
+    flex-shrink: 0;
+}
+
+.section-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.section-label {
+    font-size: 0.75rem;
     font-weight: 600;
-    color: #666;
-    margin-bottom: 10px;
+    color: var(--color-slate-400);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.25rem;
 }
 
-.texture-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
+.section-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-slate-800);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
 }
 
-.tex-btn {
-    background: #f9f9f9;
-    color: #333;
-    border: 1px solid #ddd;
-    text-align: left;
-    padding: 10px;
-    font-size: 0.9em;
+.section-desc {
+    font-size: 0.875rem;
+    color: var(--color-slate-500);
+    font-weight: 300;
+    margin-top: 0.5rem;
+    line-height: 1.5;
 }
 
-.tex-btn:hover {
-    border-color: #2563eb;
-    background: #f0f7ff;
+.help-btn {
+    color: var(--color-slate-300);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    padding: 0.25rem;
+    transition: color 0.15s;
+    flex-shrink: 0;
+}
+
+.help-btn:hover {
+    color: var(--color-primary-500);
+}
+
+/* ============================================================
+   MENU CONTAINER (SPA section host)
+============================================================ */
+#menuContainer {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem 2rem;
+    scrollbar-width: none;
+}
+
+#menuContainer::-webkit-scrollbar {
+    display: none;
+}
+
+/* ============================================================
+   MENU SECTIONS (show/hide controlled by menuController.js)
+============================================================ */
+.menu-section {
+    display: none;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.menu-section.active {
+    display: flex;
+}
+
+/* ============================================================
+   OPTION GROUPS
+============================================================ */
+.option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.option-label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-slate-700);
+}
+
+/* ============================================================
+   CARD ROW
+============================================================ */
+.card-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* ============================================================
+   RANGE SLIDER
+============================================================ */
+.slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.slider-value {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+}
+
+.slider-num {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary-500);
+}
+
+.slider-unit {
+    font-size: 0.75rem;
+    color: var(--color-slate-400);
+    font-weight: 500;
+}
+
+.slider-track-wrapper {
+    position: relative;
+    width: 100%;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.slider-track-bg {
+    position: absolute;
+    width: 100%;
+    height: 6px;
+    background: var(--color-slate-100);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.slider-track-fill {
+    height: 100%;
+    background: var(--color-primary-500);
+    border-radius: 3px;
+    transition: width 0.1s;
+}
+
+.slider-input {
+    position: absolute;
+    width: 100%;
+    z-index: 20;
+    opacity: 0;
+    cursor: pointer;
+    height: 100%;
+    -webkit-appearance: none;
+}
+
+.slider-thumb {
+    position: absolute;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: var(--color-primary-500);
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+    z-index: 10;
+    pointer-events: none;
+    transform: translateX(-50%);
+    transition: left 0.1s;
+}
+
+.slider-bounds {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--color-slate-400);
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+/* ============================================================
+   NAVIGATION TABS
+============================================================ */
+#menuNav {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   SIDEBAR FOOTER
+============================================================ */
+#sidebarFooter {
+    margin-top: auto;
+    border-top: 1px solid var(--color-slate-100);
+    padding: 1.5rem 2rem;
+    flex-shrink: 0;
+    background: #fff;
+}
+
+.delivery-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.delivery-label {
+    font-size: 0.875rem;
+    color: var(--color-slate-500);
+    font-weight: 500;
+}
+
+.delivery-value {
+    font-size: 0.875rem;
+    color: var(--color-slate-800);
+    font-weight: 600;
+}
+
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.price-amount {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--color-slate-900);
+    letter-spacing: -0.02em;
+}
+
+.price-note {
+    font-size: 0.75rem;
+    color: var(--color-slate-400);
+    font-weight: 500;
+    margin-top: 0.25rem;
+}
+
+.cart-btn {
+    width: 3.25rem;
+    height: 3.25rem;
+    background: var(--color-primary-500);
+    border: none;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.125rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+}
+
+.cart-btn:hover {
+    background: var(--color-primary-600);
+}
+
+.cart-btn:active {
+    transform: scale(0.95);
+}
+
+/* ============================================================
+   SUMMARY MODAL OVERLAY
+============================================================ */
+.summary-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.summary-modal {
+    background: #fff;
+    border-radius: 1.25rem;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 42rem;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.summary-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.75rem 2rem;
+    border-bottom: 1px solid var(--color-slate-100);
+    flex-shrink: 0;
+}
+
+.summary-modal-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-slate-800);
+}
+
+.summary-close-btn {
+    color: var(--color-slate-400);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    transition: color 0.15s;
+}
+
+.summary-close-btn:hover {
+    color: var(--color-slate-600);
+}
+
+.summary-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.summary-modal-body::-webkit-scrollbar {
+    display: none;
+}
+
+.summary-section {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--color-slate-100);
+}
+
+.summary-section h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--color-slate-800);
+    margin-bottom: 1rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-slate-100);
+}
+
+.summary-row p {
+    font-size: 0.875rem;
+    color: var(--color-slate-600);
+}
+
+.summary-item-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.summary-thumb {
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--color-slate-100);
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.summary-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.summary-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.summary-item-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-slate-700);
+}
+
+.summary-item-price {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-primary-500);
+}
+
+.summary-edit-btn {
+    color: var(--color-primary-500);
+    font-weight: 600;
+    font-size: 0.875rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.summary-edit-btn:hover {
+    color: var(--color-primary-600);
+}
+
+.summary-modal-footer {
+    padding: 1.5rem 2rem;
+    border-top: 1px solid var(--color-slate-100);
+    background: var(--color-slate-50);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.summary-total-label {
+    font-size: 0.875rem;
+    color: var(--color-slate-500);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.summary-total-amount {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-slate-900);
+}
+
+.checkout-btn {
+    padding: 1rem 2rem;
+    background: var(--color-emerald-500);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    border: none;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+    white-space: nowrap;
+}
+
+.checkout-btn:hover {
+    background: var(--color-emerald-600);
+}
+
+.checkout-btn:active {
+    transform: scale(0.95);
+}
+
+/* ============================================================
+   RESPONSIVE — MOBILE (max-width: 1023px)
+   Matches UX Pilot Mobile Version layout:
+   Model viewer top + fixed bottom-sheet (60vh, rounded-t-3xl)
+============================================================ */
+@media (max-width: 1023px) {
+
+    body {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    #appLayout {
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* --- MODEL VIEWER: flex:1, auto-fills remaining space --- */
+    #modelViewer {
+        flex: 1;
+        height: auto;
+    }
+
+    #saunaModelImg {
+        max-height: 100%;
+    }
+
+    /* --- BOTTOM-SHEET (not fixed, sits in flex flow) --- */
+    #configuratorSidebar {
+        width: 100%;
+        height: auto;
+        max-height: 60vh;
+        border-left: none;
+        border-top-left-radius: 1.5rem;
+        border-top-right-radius: 1.5rem;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+        z-index: 40;
+        flex-shrink: 0;
+    }
+
+    /* --- DRAG HANDLE (visible on mobile) --- */
+    .drag-handle {
+        display: block;
+        width: 2.5rem;
+        height: 4px;
+        background: var(--color-slate-300);
+        border-radius: 9999px;
+        margin: 0.75rem auto 1rem;
+        cursor: grab;
+    }
+
+    /* --- SECTION HEADER: centered title only, draggable --- */
+    #sectionHeader {
+        padding: 0 1.5rem 1rem;
+        border-bottom: none;
+        text-align: center;
+        cursor: grab;
+    }
+
+    .section-header-top {
+        justify-content: center;
+        margin-bottom: 0;
+    }
+
+    .section-label {
+        display: none;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        text-align: center;
+    }
+
+    .section-desc {
+        display: none;
+    }
+
+    .help-btn {
+        display: none;
+    }
+
+    /* --- MENU CONTAINER (scrollable content) --- */
+    #menuContainer {
+        padding: 1.5rem 1.5rem;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    /* --- COLLAPSED STATE: hide menu content + nav, keep header + footer --- */
+    #menuContainer.collapsed {
+        display: none;
+    }
+
+    #menuNav.collapsed {
+        display: none;
+    }
+
+    /* --- ITEM CARDS: grid 3-col --- */
+    .card-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+    }
+
+    /* --- CABIN FACADE: fixed size, align left (same as desktop) --- */
+    #menuCabin .card-row {
+        display: flex;
+        grid-template-columns: none;
+    }
+
+    /* --- EXTERIOR, INTERIOR, ITEMS: 4-col grid, align left --- */
+    #menuExterior .card-row,
+    #menuInterior .card-row,
+    #menuItems .card-row {
+        display: flex;
+        flex-wrap: wrap;
+        grid-template-columns: none;
+    }
+
+    /* --- NAV TABS --- */
+    #menuNav {
+        display: flex;
+        justify-content: center;
+        padding: 1rem 1.5rem;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    /* --- FOOTER: delivery stacked above price, cart right --- */
+    #sidebarFooter {
+        padding: 1rem 1.5rem 1.5rem;
+        border-top: 1px solid var(--color-slate-100);
+        flex-shrink: 0;
+    }
+
+    .delivery-row {
+        margin-bottom: 0.25rem;
+    }
+
+    .delivery-value {
+        display: none;
+    }
+
+    .delivery-label {
+        font-size: 0.75rem;
+    }
+
+    .price-note {
+        display: none;
+    }
+
+    .price-amount {
+        font-size: 1.5rem;
+    }
+
+    .cart-btn {
+        width: 3.5rem;
+        height: 3.5rem;
+        font-size: 1.25rem;
+    }
+
+    /* --- SUMMARY MODAL (mobile) --- */
+    .summary-modal {
+        width: 95%;
+        max-width: 28rem;
+        height: 85vh;
+        max-height: 85vh;
+    }
+
+    .summary-modal-footer {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    .summary-total {
+        text-align: center;
+    }
+
+    .checkout-btn {
+        width: 100%;
+        height: 3.5rem;
+    }
 }

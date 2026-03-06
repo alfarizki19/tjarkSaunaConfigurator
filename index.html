@@ -3,70 +3,724 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tjark - Sauna Configurator</title>
-    <link rel="stylesheet" href="style/main.css">
-</head>
-<body>
+    <title>Tjark Sauna Configurator</title>
 
-    <div id="modelViewer">
-        <div id="loading">Initialising 3D Assets...</div>
-    </div>
-
-    <div id="modelControllerArea">
-        <h2>Sauna Configurator</h2>
-        <hr>
-
-        <div class="menu-tabs">
-            <button class="tab-btn active" id="btn-scale">Size</button>
-            <button class="tab-btn" id="btn-exterior">Exterior</button>
-            <button class="tab-btn" id="btn-interior">Interior</button>
-        </div>
-
-        <div id="menuArea">
-            <div id="scaleMenu" class="menu-content">
-                <div class="control-box">
-                    <p>Sauna Widht</p>
-                    <input type="range" id="sliderX" min="1.0" max="1.5" step="0.01" value="1.0">
-                    <div class="val-display" id="valX">2.00 m</div>
-                </div>
-
-                <div class="control-box">
-                    <p>Sauna Depth</p>
-                    <input type="range" id="sliderY" min="1.0" max="1.5" step="0.01" value="1.0">
-                    <div class="val-display" id="valY">2.00 m</div>
-                </div>
-            </div>
-
-            <div id="exteriorMenu" class="menu-content" style="display: none;">
-                <p class="menu-label">Select Exterior Variant</p>
-                <div class="texture-grid">
-                    <button class="tex-btn" id="ext_A">Exterior A</button>
-                    <button class="tex-btn" id="ext_B">Exterior B</button>
-                    <button class="tex-btn" id="ext_C">Exterior C</button>
-                </div>
-            </div>
-
-            <div id="interiorMenu" class="menu-content" style="display: none;">
-                <p class="menu-label">Select Interior Variant</p>
-                <div class="texture-grid">
-                    <button class="tex-btn" id="int_A">Interior A</button>
-                    <button class="tex-btn" id="int_B">Interior B</button>
-                    <button class="tex-btn" id="int_C">Interior C</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <!-- Three.js Import Map (ES module CDN) -->
     <script type="importmap">
-    {
-        "imports": {
-            "three": "https://esm.sh/three@0.160.0",
-            "three/addons/": "https://esm.sh/three@0.160.0/examples/jsm/"
+        {
+            "imports": {
+                "three":          "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/":  "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
         }
-    }
     </script>
 
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Vanilla CSS -->
+    <link rel="stylesheet" href="style/main.css">
+    <link rel="stylesheet" href="style/items.css">
+</head>
+
+<body>
+
+    <!-- ============================================================
+         LAYOUT WRAPPER
+    ============================================================ -->
+    <div id="appLayout">
+
+        <!-- ========================================================
+             MODEL VIEWER (left panel)
+        ======================================================== -->
+        <main id="modelViewer">
+            <div class="viewer-inner">
+                <img id="saunaModelImg" src="" alt="Sauna 3D Model">
+                <div class="viewer-shadow"></div>
+            </div>
+        </main>
+
+        <!-- ========================================================
+             CONFIGURATOR SIDEBAR (right panel / mobile bottom-sheet)
+        ======================================================== -->
+        <aside id="configuratorSidebar">
+
+            <!-- SECTION HEADER -->
+            <div id="sectionHeader">
+                <div class="drag-handle"></div>
+                <div class="section-header-top">
+                    <div class="section-title-group">
+                        <p class="section-label" id="sectionLabel">Configuration</p>
+                        <h1 class="section-title" id="sectionTitle">Cabin Configuration</h1>
+                    </div>
+                    <button class="help-btn" aria-label="Help">
+                        <i class="fa-regular fa-circle-question"></i>
+                    </button>
+                </div>
+                <p class="section-desc" id="sectionDesc">
+                    Adjust the facade style and dimensions of your custom sauna cabin.
+                </p>
+            </div>
+
+            <!-- MENU CONTAINER (SPA hide/show zone) -->
+            <div id="menuContainer">
+
+                <!-- ================================================
+                     SECTION: CABIN (menuOpen = 1)
+                ================================================ -->
+                <section id="menuCabin" class="menu-section">
+
+                    <!-- Front Facade picker -->
+                    <div class="option-group">
+                        <label class="option-label">Front Facade</label>
+                        <div class="card-row">
+                            <button class="item-card active"
+                                    id="btn_Facade_Wood"
+                                    onclick="selectItemCard(this,'facade')">
+                                <div class="card-img-area"><img src="img/icons_cabinWood.png" alt="Full Wood"></div>
+                                <div class="card-label">Full Wood</div>
+                                <div class="card-price">€1,000</div>
+                            </button>
+                            <button class="item-card"
+                                    id="btn_Facade_Glass"
+                                    onclick="selectItemCard(this,'facade')">
+                                <div class="card-img-area"><img src="img/icons_cabinGlass.png" alt="Glass"></div>
+                                <div class="card-label">Glass</div>
+                                <div class="card-price">€1,500</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Length slider -->
+                    <div class="option-group">
+                        <div class="slider-header">
+                            <label class="option-label">Length</label>
+                            <div class="slider-value">
+                                <span id="lengthVal" class="slider-num">200</span>
+                                <span class="slider-unit">cm</span>
+                            </div>
+                        </div>
+                        <div class="slider-track-wrapper">
+                            <div class="slider-track-bg">
+                                <div class="slider-track-fill" id="lengthFill" style="width:0%"></div>
+                            </div>
+                            <input type="range" min="200" max="350" value="200" step="10"
+                                   id="lengthInput"
+                                   class="slider-input"
+                                   oninput="updateSlider(this,'lengthVal','lengthFill','lengthThumb')">
+                            <div class="slider-thumb" id="lengthThumb" style="left:0%"></div>
+                        </div>
+                        <div class="slider-bounds">
+                            <span>200 cm</span><span>350 cm</span>
+                        </div>
+                    </div>
+
+                    <!-- Width slider -->
+                    <div class="option-group">
+                        <div class="slider-header">
+                            <label class="option-label">Width</label>
+                            <div class="slider-value">
+                                <span id="widthVal" class="slider-num">200</span>
+                                <span class="slider-unit">cm</span>
+                            </div>
+                        </div>
+                        <div class="slider-track-wrapper">
+                            <div class="slider-track-bg">
+                                <div class="slider-track-fill" id="widthFill" style="width:0%"></div>
+                            </div>
+                            <input type="range" min="200" max="350" value="200" step="10"
+                                   id="widthInput"
+                                   class="slider-input"
+                                   oninput="updateSlider(this,'widthVal','widthFill','widthThumb')">
+                            <div class="slider-thumb" id="widthThumb" style="left:0%"></div>
+                        </div>
+                        <div class="slider-bounds">
+                            <span>200 cm</span><span>350 cm</span>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ================================================
+                     SECTION: EXTERIOR (menuOpen = 2)
+                ================================================ -->
+                <section id="menuExterior" class="menu-section">
+
+                    <!-- Exterior Wood Type picker -->
+                    <!-- Shown when Cabin Front Facade = Full Wood (hidden when Glass) -->
+                    <div class="option-group" id="exteriorWoodGroup">
+                        <label class="option-label">Wood Type</label>
+                        <div class="card-row">
+                            <button class="item-card active"
+                                    id="btn_Exterior_A"
+                                    onclick="selectItemCard(this,'exterior')">
+                                <div class="card-img-area"><img src="img/icons_woodA.jpg" alt="Wood A"></div>
+                                <div class="card-label">Wood A</div>
+                                <div class="card-price">€500</div>
+                            </button>
+                            <button class="item-card"
+                                    id="btn_Exterior_B"
+                                    onclick="selectItemCard(this,'exterior')">
+                                <div class="card-img-area"><img src="img/icons_woodB.jpg" alt="Wood B"></div>
+                                <div class="card-label">Wood B</div>
+                                <div class="card-price">€400</div>
+                            </button>
+                            <button class="item-card"
+                                    id="btn_Exterior_C"
+                                    onclick="selectItemCard(this,'exterior')">
+                                <div class="card-img-area"><img src="img/icons_woodC.jpg" alt="Wood C"></div>
+                                <div class="card-label">Wood C</div>
+                                <div class="card-price">€750</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Exterior Glass picker -->
+                    <!-- Shown when Cabin Front Facade = Glass (hidden when Full Wood) -->
+                    <div class="option-group" id="exteriorGlassGroup" style="display:none;">
+                        <label class="option-label">Glass</label>
+                        <div class="card-row">
+                            <button class="item-card active"
+                                    id="btn_facadeGlass_A"
+                                    onclick="selectItemCard(this,'facadeGlass')">
+                                <div class="card-img-area" style="background:#949494;"></div>
+                                <div class="card-label">Glass A</div>
+                                <div class="card-price">€750</div>
+                            </button>
+                            <button class="item-card"
+                                    id="btn_facadeGlass_B"
+                                    onclick="selectItemCard(this,'facadeGlass')">
+                                <div class="card-img-area" style="background:#191919;"></div>
+                                <div class="card-label">Glass B</div>
+                                <div class="card-price">€950</div>
+                            </button>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ================================================
+                     SECTION: INTERIOR (menuOpen = 3)
+                ================================================ -->
+                <section id="menuInterior" class="menu-section">
+
+                    <!-- Interior Wood Type picker -->
+                    <div class="option-group">
+                        <label class="option-label">Wood Type</label>
+                        <div class="card-row">
+                            <button class="item-card active"
+                                    id="btn_Interior_A"
+                                    onclick="selectItemCard(this,'interior')">
+                                <div class="card-img-area"><img src="img/icons_woodA.jpg" alt="Wood A"></div>
+                                <div class="card-label">Wood A</div>
+                                <div class="card-price">€500</div>
+                            </button>
+                            <button class="item-card"
+                                    id="btn_Interior_B"
+                                    onclick="selectItemCard(this,'interior')">
+                                <div class="card-img-area"><img src="img/icons_woodB.jpg" alt="Wood B"></div>
+                                <div class="card-label">Wood B</div>
+                                <div class="card-price">€400</div>
+                            </button>
+                            <button class="item-card"
+                                    id="btn_Interior_C"
+                                    onclick="selectItemCard(this,'interior')">
+                                <div class="card-img-area"><img src="img/icons_woodC.jpg" alt="Wood C"></div>
+                                <div class="card-label">Wood C</div>
+                                <div class="card-price">€750</div>
+                            </button>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ================================================
+                     SECTION: ITEMS (menuOpen = 4)
+                ================================================ -->
+                <section id="menuItems" class="menu-section">
+
+                    <!-- Oven picker -->
+                    <div class="option-group">
+                        <label class="option-label">Oven</label>
+                        <div class="card-row">
+                            <button class="item-card active"
+                                    id="btn_oven_A"
+                                    onclick="selectItemCard(this,'oven')">
+                                <div class="card-img-area"><img src="img/icons_ovenA.png" alt="Oven A"></div>
+                                <div class="card-label">Oven A</div>
+                                <div class="card-price">€850</div>
+                            </button>
+                            <button class="item-card"
+                                    id="btn_oven_B"
+                                    onclick="selectItemCard(this,'oven')">
+                                <div class="card-img-area"><img src="img/icons_ovenB.png" alt="Oven B"></div>
+                                <div class="card-label">Oven B</div>
+                                <div class="card-price">€1,250</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bench Wood picker -->
+                    <div class="option-group">
+                        <label class="option-label">Bench Wood</label>
+                        <div class="card-row">
+                            <button class="item-card active"
+                                    id="btn_bench_A"
+                                    onclick="selectItemCard(this,'bench')">
+                                <div class="card-img-area"><img src="img/icons_woodA.jpg" alt="Wood A"></div>
+                                <div class="card-label">Wood A</div>
+                                <div class="card-price">€450</div>
+                            </button>
+                            <button class="item-card"
+                                    id="btn_bench_B"
+                                    onclick="selectItemCard(this,'bench')">
+                                <div class="card-img-area"><img src="img/icons_woodB.jpg" alt="Wood B"></div>
+                                <div class="card-label">Wood B</div>
+                                <div class="card-price">€350</div>
+                            </button>
+                            <button class="item-card"
+                                    id="btn_bench_C"
+                                    onclick="selectItemCard(this,'bench')">
+                                <div class="card-img-area"><img src="img/icons_woodC.jpg" alt="Wood C"></div>
+                                <div class="card-label">Wood C</div>
+                                <div class="card-price">€650</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Door Glass picker -->
+                    <div class="option-group">
+                        <label class="option-label">Door Glass</label>
+                        <div class="card-row">
+                            <button class="item-card active"
+                                    id="btn_doorGlass_A"
+                                    onclick="selectItemCard(this,'doorGlass')">
+                                <div class="card-img-area" style="background:#949494;"></div>
+                                <div class="card-label">Glass A</div>
+                                <div class="card-price">€750</div>
+                            </button>
+                            <button class="item-card"
+                                    id="btn_doorGlass_B"
+                                    onclick="selectItemCard(this,'doorGlass')">
+                                <div class="card-img-area" style="background:#191919;"></div>
+                                <div class="card-label">Glass B</div>
+                                <div class="card-price">€950</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Door Handle picker -->
+                    <div class="option-group">
+                        <label class="option-label">Door Handle</label>
+                        <div class="card-row">
+                            <button class="item-card active"
+                                    id="btn_doorHandle_A"
+                                    onclick="selectItemCard(this,'doorHandle')">
+                                <div class="card-img-area"><img src="img/icons_doorHandleA.png" alt="Handle A"></div>
+                                <div class="card-label">Handle A</div>
+                                <div class="card-price">€350</div>
+                            </button>
+                            <button class="item-card"
+                                    id="btn_doorHandle_B"
+                                    onclick="selectItemCard(this,'doorHandle')">
+                                <div class="card-img-area"><img src="img/icons_doorHandleB.png" alt="Handle B"></div>
+                                <div class="card-label">Handle B</div>
+                                <div class="card-price">€550</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Door Hinge picker -->
+                    <div class="option-group">
+                        <label class="option-label">Door Hinge</label>
+                        <div class="card-row">
+                            <button class="item-card active"
+                                    id="btn_doorHinge_A"
+                                    onclick="selectItemCard(this,'doorHinge')">
+                                <div class="card-img-area"><img src="img/icons_doorHingeA.png" alt="Hinge A"></div>
+                                <div class="card-label">Hinge A</div>
+                                <div class="card-price">€250</div>
+                            </button>
+                            <button class="item-card"
+                                    id="btn_doorHinge_B"
+                                    onclick="selectItemCard(this,'doorHinge')">
+                                <div class="card-img-area"><img src="img/icons_doorHingeB.png" alt="Hinge B"></div>
+                                <div class="card-label">Hinge B</div>
+                                <div class="card-price">€300</div>
+                            </button>
+                        </div>
+                    </div>
+
+                </section>
+
+            </div><!-- /#menuContainer -->
+
+            <!-- NAVIGATION TABS -->
+            <nav id="menuNav">
+                <button class="nav-btn active" id="navBtnCabin"
+                        onclick="openMenu(1)">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Cabin</span>
+                </button>
+                <button class="nav-btn" id="navBtnExterior"
+                        onclick="openMenu(2)">
+                    <i class="fa-solid fa-tree"></i>
+                    <span>Exterior</span>
+                </button>
+                <button class="nav-btn" id="navBtnInterior"
+                        onclick="openMenu(3)">
+                    <i class="fa-solid fa-couch"></i>
+                    <span>Interior</span>
+                </button>
+                <button class="nav-btn" id="navBtnItems"
+                        onclick="openMenu(4)">
+                    <i class="fa-solid fa-shapes"></i>
+                    <span>Items</span>
+                </button>
+            </nav>
+
+            <!-- SIDEBAR FOOTER -->
+            <footer id="sidebarFooter">
+                <div class="delivery-row">
+                    <span class="delivery-label">Estimated Delivery</span>
+                    <span class="delivery-value">4-6 Weeks</span>
+                </div>
+                <div class="price-row">
+                    <div class="price-block">
+                        <p class="price-amount" id="totalPrice">€4,500</p>
+                        <p class="price-note">Total Price (VAT incl.)</p>
+                    </div>
+                    <button class="cart-btn" id="cartBtn"
+                            onclick="openSummary()">
+                        <i class="fa-solid fa-shopping-cart"></i>
+                    </button>
+                </div>
+            </footer>
+
+        </aside><!-- /#configuratorSidebar -->
+
+    </div><!-- /#appLayout -->
+
+    <!-- ============================================================
+         SUMMARY POPUP (modal overlay — not a menu section)
+         Phase 1: all content is dummy/placeholder text
+    ============================================================ -->
+    <div id="menuSummary" class="summary-overlay" style="display:none;">
+        <div class="summary-modal">
+
+            <div class="summary-modal-header">
+                <h2>Configuration Summary</h2>
+                <button class="summary-close-btn" onclick="closeSummary()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="summary-modal-body">
+
+                <!-- ================================================
+                     CABIN
+                ================================================ -->
+                <div class="summary-section">
+                    <h3>Cabin</h3>
+
+                    <!-- Facade Type: Full Wood -->
+                    <div class="summary-row" id="summaryItems_Facade_Wood">
+                        <div class="summary-item-info">
+                            <span class="summary-item-name"><strong>Facade Type:</strong> Full Wood</span>
+                            <span class="summary-item-price">€1,000</span>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(1); closeSummary()">Edit</button>
+                    </div>
+                    <!-- Facade Type: Glass -->
+                    <div class="summary-row" id="summaryItems_Facade_Glass" style="display:none;">
+                        <div class="summary-item-info">
+                            <span class="summary-item-name"><strong>Facade Type:</strong> Glass</span>
+                            <span class="summary-item-price">€1,500</span>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(1); closeSummary()">Edit</button>
+                    </div>
+
+                    <!-- Dimension (size — implemented later) -->
+                    <div class="summary-row" id="summaryItems_Dimension">
+                        <div class="summary-item-info">
+                            <span class="summary-item-name"><strong>Dimension:</strong> — cm × — cm</span>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(1); closeSummary()">Edit</button>
+                    </div>
+                </div>
+
+                <!-- ================================================
+                     EXTERIOR
+                ================================================ -->
+                <div class="summary-section">
+                    <h3>Exterior</h3>
+
+                    <!-- Wood Type: A (visible when facade=Wood, exterior=A) -->
+                    <div class="summary-row" id="summaryItems_Exterior_A">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_woodA.jpg" alt="Wood A"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Wood A</span>
+                                <span class="summary-item-price">€500</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(2); closeSummary()">Edit</button>
+                    </div>
+                    <!-- Wood Type: B -->
+                    <div class="summary-row" id="summaryItems_Exterior_B" style="display:none;">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_woodB.jpg" alt="Wood B"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Wood B</span>
+                                <span class="summary-item-price">€400</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(2); closeSummary()">Edit</button>
+                    </div>
+                    <!-- Wood Type: C -->
+                    <div class="summary-row" id="summaryItems_Exterior_C" style="display:none;">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_woodC.jpg" alt="Wood C"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Wood C</span>
+                                <span class="summary-item-price">€750</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(2); closeSummary()">Edit</button>
+                    </div>
+
+                    <!-- Facade Glass: A (visible when facade=Glass, facadeGlass=A) -->
+                    <div class="summary-row" id="summaryItems_FacadeGlass_A" style="display:none;">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb" style="background:#949494;"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Glass A</span>
+                                <span class="summary-item-price">€750</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(2); closeSummary()">Edit</button>
+                    </div>
+                    <!-- Facade Glass: B -->
+                    <div class="summary-row" id="summaryItems_FacadeGlass_B" style="display:none;">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb" style="background:#191919;"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Glass B</span>
+                                <span class="summary-item-price">€950</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(2); closeSummary()">Edit</button>
+                    </div>
+                </div>
+
+                <!-- ================================================
+                     INTERIOR
+                ================================================ -->
+                <div class="summary-section">
+                    <h3>Interior</h3>
+
+                    <!-- Wood Type: A -->
+                    <div class="summary-row" id="summaryItems_Interior_A">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_woodA.jpg" alt="Wood A"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Wood A</span>
+                                <span class="summary-item-price">€500</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(3); closeSummary()">Edit</button>
+                    </div>
+                    <!-- Wood Type: B -->
+                    <div class="summary-row" id="summaryItems_Interior_B" style="display:none;">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_woodB.jpg" alt="Wood B"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Wood B</span>
+                                <span class="summary-item-price">€400</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(3); closeSummary()">Edit</button>
+                    </div>
+                    <!-- Wood Type: C -->
+                    <div class="summary-row" id="summaryItems_Interior_C" style="display:none;">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_woodC.jpg" alt="Wood C"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Wood C</span>
+                                <span class="summary-item-price">€750</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(3); closeSummary()">Edit</button>
+                    </div>
+                </div>
+
+                <!-- ================================================
+                     ITEMS
+                ================================================ -->
+                <div class="summary-section">
+                    <h3>Items</h3>
+
+                    <!-- Oven: A -->
+                    <div class="summary-row" id="summaryItems_Oven_A">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_ovenA.png" alt="Oven A"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Oven A</span>
+                                <span class="summary-item-price">€850</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(4); closeSummary()">Edit</button>
+                    </div>
+                    <!-- Oven: B -->
+                    <div class="summary-row" id="summaryItems_Oven_B" style="display:none;">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_ovenB.png" alt="Oven B"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Oven B</span>
+                                <span class="summary-item-price">€1,250</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(4); closeSummary()">Edit</button>
+                    </div>
+
+                    <!-- Bench Wood: A -->
+                    <div class="summary-row" id="summaryItems_Bench_A">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_woodA.jpg" alt="Wood A"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Bench Wood A</span>
+                                <span class="summary-item-price">€450</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(4); closeSummary()">Edit</button>
+                    </div>
+                    <!-- Bench Wood: B -->
+                    <div class="summary-row" id="summaryItems_Bench_B" style="display:none;">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_woodB.jpg" alt="Wood B"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Bench Wood B</span>
+                                <span class="summary-item-price">€350</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(4); closeSummary()">Edit</button>
+                    </div>
+                    <!-- Bench Wood: C -->
+                    <div class="summary-row" id="summaryItems_Bench_C" style="display:none;">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_woodC.jpg" alt="Wood C"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Bench Wood C</span>
+                                <span class="summary-item-price">€650</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(4); closeSummary()">Edit</button>
+                    </div>
+
+                    <!-- Door Glass: A -->
+                    <div class="summary-row" id="summaryItems_DoorGlass_A">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb" style="background:#949494;"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Door Glass A</span>
+                                <span class="summary-item-price">€750</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(4); closeSummary()">Edit</button>
+                    </div>
+                    <!-- Door Glass: B -->
+                    <div class="summary-row" id="summaryItems_DoorGlass_B" style="display:none;">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb" style="background:#191919;"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Door Glass B</span>
+                                <span class="summary-item-price">€950</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(4); closeSummary()">Edit</button>
+                    </div>
+
+                    <!-- Door Handle: A -->
+                    <div class="summary-row" id="summaryItems_DoorHandle_A">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_doorHandleA.png" alt="Handle A"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Door Handle A</span>
+                                <span class="summary-item-price">€350</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(4); closeSummary()">Edit</button>
+                    </div>
+                    <!-- Door Handle: B -->
+                    <div class="summary-row" id="summaryItems_DoorHandle_B" style="display:none;">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_doorHandleB.png" alt="Handle B"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Door Handle B</span>
+                                <span class="summary-item-price">€550</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(4); closeSummary()">Edit</button>
+                    </div>
+
+                    <!-- Door Hinge: A -->
+                    <div class="summary-row" id="summaryItems_DoorHinge_A">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_doorHingeA.png" alt="Hinge A"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Door Hinge A</span>
+                                <span class="summary-item-price">€250</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(4); closeSummary()">Edit</button>
+                    </div>
+                    <!-- Door Hinge: B -->
+                    <div class="summary-row" id="summaryItems_DoorHinge_B" style="display:none;">
+                        <div class="summary-item-preview">
+                            <div class="summary-thumb"><img src="img/icons_doorHingeB.png" alt="Hinge B"></div>
+                            <div class="summary-item-info">
+                                <span class="summary-item-name">Door Hinge B</span>
+                                <span class="summary-item-price">€300</span>
+                            </div>
+                        </div>
+                        <button class="summary-edit-btn" onclick="openMenu(4); closeSummary()">Edit</button>
+                    </div>
+
+                </div>
+
+            </div><!-- /.summary-modal-body -->
+
+            <div class="summary-modal-footer">
+                <div class="summary-total">
+                    <p class="summary-total-label">Total Price</p>
+                    <p class="summary-total-amount">€4,500</p>
+                </div>
+                <button class="checkout-btn">Proceed to Checkout</button>
+            </div>
+
+        </div><!-- /.summary-modal -->
+    </div><!-- /#menuSummary -->
+
+    <!-- JS: SPA navigation (regular script, exposes window.* functions) -->
+    <script src="js/menuController.js"></script>
+
+    <!-- JS: Summary show/hide controller (must load before hideAndShowObject.js) -->
+    <script src="js/summarySystems.js"></script>
+
+    <!-- JS: Total price calculator (must load before hideAndShowObject.js) -->
+    <script src="js/summaryTotalPriceSystems.js"></script>
+
+    <!-- JS: Hide and show 3D mesh controller (regular script) -->
+    <script src="js/hideAndShowObject.js"></script>
+
+    <!-- JS: Three.js model loader (ES module) -->
     <script type="module" src="js/loadModel.js"></script>
+
+    <!-- JS: 3D Scale controller (ES module, depends on loadModel.js globals) -->
+    <script type="module" src="js/scaleController.js"></script>
 
 </body>
 </html>

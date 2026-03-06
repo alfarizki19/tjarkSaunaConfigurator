@@ -1,0 +1,154 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "lastUpdated": "2026-03-04",
+    "currency": "EUR",
+    "description": "Pricing database for Tjark Sauna Configurator"
+  },
+
+  "cabin": {
+    "description": "Base cabin size and facade type pricing",
+    "sizeRate": {
+      "pricePerMeter": 2000,
+      "unit": "meter",
+      "description": "Base price per meter of cabin size"
+    },
+    "facadeType": {
+      "cabin_wood": {
+        "label": "Wood Facade",
+        "stateValue": 1,
+        "price": 1000
+      },
+      "cabin_glass": {
+        "label": "Glass Facade",
+        "stateValue": 2,
+        "price": 1500
+      }
+    },
+    "frontGlass": {
+      "cabin_frontGlass_a": {
+        "label": "Front Glass A",
+        "stateValue": 1,
+        "price": 750
+      },
+      "cabin_frontGlass_b": {
+        "label": "Front Glass B",
+        "stateValue": 2,
+        "price": 950
+      }
+    }
+  },
+
+  "exterior": {
+    "description": "Exterior wood type pricing (back / left / right walls + roof)",
+    "exterior_wood_a": {
+      "label": "Exterior Wood A",
+      "stateValue": 1,
+      "price": 500
+    },
+    "exterior_wood_b": {
+      "label": "Exterior Wood B",
+      "stateValue": 2,
+      "price": 400
+    },
+    "exterior_wood_c": {
+      "label": "Exterior Wood C",
+      "stateValue": 3,
+      "price": 750
+    }
+  },
+
+  "interior": {
+    "description": "Interior wood type pricing (back / left / right walls + roof)",
+    "interior_wood_a": {
+      "label": "Interior Wood A",
+      "stateValue": 1,
+      "price": 500
+    },
+    "interior_wood_b": {
+      "label": "Interior Wood B",
+      "stateValue": 2,
+      "price": 400
+    },
+    "interior_wood_c": {
+      "label": "Interior Wood C",
+      "stateValue": 3,
+      "price": 750
+    }
+  },
+
+  "oven": {
+    "description": "Oven model pricing",
+    "oven_A": {
+      "label": "Oven A",
+      "stateValue": 1,
+      "price": 850
+    },
+    "oven_B": {
+      "label": "Oven B",
+      "stateValue": 2,
+      "price": 1250
+    }
+  },
+
+  "bench": {
+    "description": "Bench wood type pricing",
+    "bench_wood_a": {
+      "label": "Bench Wood A",
+      "stateValue": 1,
+      "price": 450
+    },
+    "bench_wood_b": {
+      "label": "Bench Wood B",
+      "stateValue": 2,
+      "price": 350
+    },
+    "bench_wood_c": {
+      "label": "Bench Wood C",
+      "stateValue": 3,
+      "price": 650
+    }
+  },
+
+  "doorGlass": {
+    "description": "Door glass type pricing",
+    "door_glass_a": {
+      "label": "Door Glass A",
+      "stateValue": 1,
+      "price": 750
+    },
+    "door_glass_b": {
+      "label": "Door Glass B",
+      "stateValue": 2,
+      "price": 950
+    }
+  },
+
+  "doorHandle": {
+    "description": "Door handle type pricing",
+    "door_handle_a": {
+      "label": "Door Handle A",
+      "stateValue": 1,
+      "price": 350
+    },
+    "door_handle_b": {
+      "label": "Door Handle B",
+      "stateValue": 2,
+      "price": 550
+    }
+  },
+
+  "doorHinge": {
+    "description": "Door hinge type pricing",
+    "door_hinge_a": {
+      "label": "Door Hinge A",
+      "stateValue": 1,
+      "price": 250
+    },
+    "door_hinge_b": {
+      "label": "Door Hinge B",
+      "stateValue": 2,
+      "price": 300
+    }
+  }
+}
